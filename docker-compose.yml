@@ -1,0 +1,49 @@
+version: '3.9'
+
+services:
+  django:
+    build:
+      context: ./backend
+      dockerfile: ./Dockerfile
+      target: dev
+    ports:
+      - "${DJANGO_PORT:-8000}:8000"
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__/
+    networks:
+      - scaler-network
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - db
+  nextjs:
+    build:
+      context: ./frontend
+      dockerfile: ./Dockerfile
+      target: dev
+    ports:
+      - "${NEXTJS_PORT:-3000}:3000"
+    volumes:
+      - ./frontend:/app
+    networks:
+      - scaler-network
+    depends_on:
+      - db
+      - django
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: django
+      POSTGRES_PASSWORD: django
+      POSTGRES_DB: django_db
+    ports:
+      - "${POSTGRESQL_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - scaler-network
+networks:
+  scaler-network:
+volumes:
+  postgres_data:
